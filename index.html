@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>動物積み上げゲーム</title>
+  <title>タワーゲーム</title>
   <style>
     body {
       margin: 0;
@@ -11,6 +11,7 @@
       background: linear-gradient(to bottom, #87CEEB, #98FB98);
       font-family: Arial, sans-serif;
       touch-action: manipulation;
+      user-select: none;
     }
     canvas {
       display: block;
@@ -30,37 +31,63 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.9);
       color: white;
       padding: 30px;
-      border-radius: 10px;
+      border-radius: 15px;
       text-align: center;
       display: none;
       z-index: 200;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
     #restartBtn {
       background: #4CAF50;
       color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
+      padding: 15px 30px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 18px;
-      margin-top: 10px;
+      font-size: 20px;
+      margin-top: 15px;
+      transition: background 0.3s;
+    }
+    #restartBtn:hover {
+      background: #45a049;
+    }
+    #nextImage {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.9);
+      padding: 15px;
+      border-radius: 15px;
+      text-align: center;
+      z-index: 100;
+      min-width: 100px;
+    }
+    #previewImage {
+      border: 3px solid #333;
+      border-radius: 8px;
+      background-color: #f0f0f0;
     }
   </style>
 </head>
 <body>
   <div id="ui">
     <div>スコア: <span id="score">0</span></div>
-    <div>動物: <span id="animalCount">0</span>匹</div>
+    <div>オブジェクト: <span id="objectCount">0</span>個</div>
+  </div>
+  
+  <div id="nextImage">
+    <div style="color: #333; font-size: 18px; margin-bottom: 8px; font-weight: bold;">次:</div>
+    <div id="previewImage" style="width: 60px; height: 60px; background: #ddd; margin: 0 auto;"></div>
   </div>
   
   <div id="gameOver">
     <h2>ゲームオーバー！</h2>
-    <p>動物が足場から落ちました...</p>
+    <p>オブジェクトが足場から落ちました...</p>
     <p>最終スコア: <span id="finalScore">0</span></p>
-    <button id="restartBtn">もう一度</button>
+    <button id="restartBtn">もう一度プレイ</button>
   </div>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
@@ -74,33 +101,61 @@
     
     let engine, world, render;
     let score = 0;
-    let animalCount = 0;
+    let objectCount = 0;
     let gameRunning = true;
-    let animals = [];
+    let objects = [];
     let platform;
+    let currentImageIndex = 0;
+    let nextImageIndex = 0;
+    let lastDropTime = 0; // 連続クリック防止用
+    
+    // 9種類の画像設定
+    const imageData = [
+      // カスタム多角形（A-H）
+      { name: 'A', path: './images/A.png', width: 80, height: 40, type: 'rectangle', scale: 1.2 },
+      { name: 'B', path: './images/B.png', width: 60, height: 80, type: 'rectangle', scale: 1.2 },
+      { name: 'C', path: './images/C.png', width: 65, height: 80, type: 'rectangle', scale: 1.2 },
+      { name: 'D', path: './images/D.png', width: 75, height: 80, type: 'rectangle', scale: 1.2 },
+      { name: 'E', path: './images/E.png', width: 30, height: 80, type: 'rectangle', scale: 1.2 },
+      { name: 'F', path: './images/F.png', width: 80, height: 50, type: 'rectangle', scale: 1.2 },
+      { name: 'G', path: './images/G.png', width: 70, height: 80, type: 'rectangle', scale: 1.2 },
+      { name: 'H', path: './images/H.png', width: 80, height: 55, type: 'rectangle', scale: 1.2 },
+      // I.pngのみ円形
+      { name: 'I', path: './images/I.png', width: 40, height: 40, type: 'circle', scale: 1.2 }
+    ];
     
     function initGame() {
       // エンジン作成
       engine = Engine.create();
       world = engine.world;
+      // 重力を弱める（例: 0.5）
+      engine.gravity.y = 0.5;
       
-      // レンダラー作成
+      // 画面サイズを取得（スマホ対応）
+  const gameWidth = window.innerWidth;
+  const gameHeight = window.innerHeight * 0.8;
+      
+      // レンダラー作成（フル画面対応）
       render = Render.create({
         element: document.body,
         engine: engine,
         options: {
-          width: window.innerWidth,
-          height: window.innerHeight,
+          width: gameWidth,
+          height: gameHeight,
           wireframes: false,
-          background: 'transparent'
+          background: 'transparent',
+          pixelRatio: window.devicePixelRatio || 1
         }
       });
       
-      // 中空の足場を作成（画面中央より少し下）
+      // 中空の足場を作成（画面サイズに応じて調整）
+      const platformWidth = Math.min(gameWidth * 0.8, 350);
+    // 足場のY座標は画面高さの中央より少し下
+    const platformY = gameHeight * 0.6;
       platform = Bodies.rectangle(
-        window.innerWidth / 2,
-        window.innerHeight * 0.7,
-        300,
+        gameWidth / 2,
+        platformY,
+        platformWidth,
         20,
         { 
           isStatic: true, 
@@ -111,40 +166,115 @@
       
       // ゲーム状態初期化
       score = 0;
-      animalCount = 0;
+      objectCount = 0;
       gameRunning = true;
-      animals = [];
+      objects = [];
+      lastDropTime = 0;
+      
+      // 次の画像をランダムに決定
+      nextImageIndex = Math.floor(Math.random() * imageData.length);
+      
+      updateUI();
+      updatePreview();
+    }
+    
+    function updateUI() {
       document.getElementById('score').textContent = score;
-      document.getElementById('animalCount').textContent = animalCount;
+      document.getElementById('objectCount').textContent = objectCount;
       document.getElementById('gameOver').style.display = 'none';
     }
     
-    function dropAnimal(x) {
+    function updatePreview() {
+      const preview = document.getElementById('previewImage');
+      const nextImage = imageData[nextImageIndex];
+      
+      // プレビューサイズを実際の画像比率に合わせて調整（大きめに）
+      const maxSize = 80;
+      let previewWidth, previewHeight;
+      
+      if (nextImage.width >= nextImage.height) {
+        previewWidth = maxSize;
+        previewHeight = (nextImage.height / nextImage.width) * maxSize;
+      } else {
+        previewHeight = maxSize;
+        previewWidth = (nextImage.width / nextImage.height) * maxSize;
+      }
+      
+      preview.style.width = previewWidth + 'px';
+      preview.style.height = previewHeight + 'px';
+      preview.style.backgroundImage = `url(${nextImage.path})`;
+      preview.style.backgroundSize = 'contain';
+      preview.style.backgroundRepeat = 'no-repeat';
+      preview.style.backgroundPosition = 'center';
+    }
+    
+    function dropObject(x) {
       if (!gameRunning) return;
       
-      const animal = Bodies.rectangle(x, 100, 50, 50, {
-        restitution: 0.3,
-        render: { fillStyle: '#FF6B6B' }
-      });
+      // 連続クリック防止（200ms以内は無視）
+      const currentTime = Date.now();
+      if (currentTime - lastDropTime < 200) return;
+      lastDropTime = currentTime;
       
-      World.add(world, animal);
-      animals.push(animal);
+      // 現在落とすのは nextImageIndex の画像
+      currentImageIndex = nextImageIndex;
+      const imageInfo = imageData[currentImageIndex];
       
-      score += 10;
-      animalCount++;
-      document.getElementById('score').textContent = score;
-      document.getElementById('animalCount').textContent = animalCount;
+      let body;
+      
+      // 衝突判定の種類に応じてボディを作成
+      if (imageInfo.type === 'circle') {
+        // 円形の衝突判定
+        const radius = Math.max(imageInfo.width, imageInfo.height) / 2 * imageInfo.scale;
+        body = Bodies.circle(x, 50, radius, {
+          restitution: 0.4,
+          friction: 0.7,
+          render: {
+            sprite: {
+              texture: imageInfo.path,
+              xScale: imageInfo.scale,
+              yScale: imageInfo.scale
+            }
+          }
+        });
+      } else {
+        // 矩形の衝突判定
+        body = Bodies.rectangle(x, 50, imageInfo.width * imageInfo.scale, imageInfo.height * imageInfo.scale, {
+          restitution: 0.3,
+          friction: 0.8,
+          render: {
+            sprite: {
+              texture: imageInfo.path,
+              xScale: imageInfo.scale,
+              yScale: imageInfo.scale
+            }
+          }
+        });
+      }
+      
+      World.add(world, body);
+      objects.push(body);
+      
+      // スコア更新
+      const sizeBonus = Math.floor((imageInfo.width * imageInfo.height) / 100);
+      score += 10 + sizeBonus;
+      objectCount++;
+      
+      // 次の画像を新しくランダムに決定
+      nextImageIndex = Math.floor(Math.random() * imageData.length);
+      
+      updateUI();
+      updatePreview();
     }
     
     function checkGameOver() {
       if (!gameRunning) return;
       
-      // 動物が足場より大幅に下に落ちたかチェック
       const platformBottom = platform.position.y + 10;
-      const gameOverLine = platformBottom + 200; // 足場から200px下
+      const gameOverLine = platformBottom + 200;
       
-      for (let animal of animals) {
-        if (animal.position.y > gameOverLine) {
+      for (let obj of objects) {
+        if (obj.position.y > gameOverLine) {
           gameOver();
           return;
         }
@@ -158,37 +288,63 @@
     }
     
     function restart() {
-      // 古いレンダラーを停止
-      Render.stop(render);
+      if (render) {
+        Render.stop(render);
+        if (render.canvas && render.canvas.parentNode) {
+          render.canvas.parentNode.removeChild(render.canvas);
+        }
+      }
       Engine.clear(engine);
-      render.canvas.remove();
       
-      // ゲーム再初期化
       initGame();
       Engine.run(engine);
       Render.run(render);
     }
     
-    // イベントリスナー
-    document.addEventListener('click', function(event) {
-      dropAnimal(event.clientX);
-    });
+    // イベントリスナー（重複防止）
+    let eventListenersAdded = false;
     
-    document.addEventListener('touchstart', function(event) {
-      event.preventDefault();
-      const touch = event.touches[0];
-      dropAnimal(touch.clientX);
-    });
+    function addEventListeners() {
+      if (eventListenersAdded) return;
+      eventListenersAdded = true;
+      
+      document.addEventListener('click', function(event) {
+        if (event.target.closest('#gameOver') || event.target.closest('#restartBtn') || event.target.closest('#nextImage')) {
+          return;
+        }
+        dropObject(event.clientX);
+      });
+      
+      document.addEventListener('touchstart', function(event) {
+        if (event.target.closest('#gameOver') || event.target.closest('#restartBtn') || event.target.closest('#nextImage')) {
+          return;
+        }
+        event.preventDefault();
+        const touch = event.touches[0];
+        dropObject(touch.clientX);
+      });
+      
+      document.getElementById('restartBtn').addEventListener('click', restart);
+    }
     
-    document.getElementById('restartBtn').addEventListener('click', restart);
+    // 画面サイズ変更対応
+    window.addEventListener('resize', function() {
+      if (render) {
+        render.canvas.width = window.innerWidth;
+        render.canvas.height = window.innerHeight;
+        render.options.width = window.innerWidth;
+        render.options.height = window.innerHeight;
+      }
+    });
     
     // ゲーム開始
     initGame();
     Engine.run(engine);
     Render.run(render);
+    addEventListeners();
     
     // ゲームオーバーチェック
-    setInterval(checkGameOver, 100);
+    setInterval(checkGameOver, 200);
   </script>
 </body>
 </html>
