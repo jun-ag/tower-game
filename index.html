@@ -19,11 +19,11 @@
       height: 100vh;
     }
     #gameContainer {
-      width: 375px;
-      height: 667px;
-      background: linear-gradient(to bottom, #87CEEB, #98FB98);
-      position: relative;
-      overflow: hidden;
+  width: 375px;
+  height: 667px;
+  background: url('./images/background.png') center/cover no-repeat;
+  position: relative;
+  overflow: hidden;
     }
     canvas {
       display: block;
@@ -43,7 +43,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.9);
+  background: rgba(0,0,0,0.75);
       color: white;
       padding: 30px;
       border-radius: 15px;
@@ -57,7 +57,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,200,0,0.9);
+      background: rgba(47, 0, 200, 0.9);
       color: white;
       padding: 30px;
       border-radius: 15px;
@@ -67,7 +67,7 @@
       box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
     #restartBtn, #clearRestartBtn {
-      background: #4CAF50;
+      background: #2317d0;
       color: white;
       border: none;
       padding: 15px 25px;
@@ -109,19 +109,19 @@
     </div>
     
     <div id="gameOver">
-      <h2>ゲームオーバー！</h2>
-      <p>部長が足場から落ちました</p>
+      <h2>GAME OVER</h2>
+      <p>部長が舞台から落ちました</p>
       <p>FINAL SCORE: <span id="finalScore">0</span></p>
       <p id="newHighScore" style="color: #FFD700; font-weight: bold; display: none;">🎉 NEW HIGH SCORE! 🎉</p>
-      <button id="restartBtn">もう一度プレイ</button>
+      <button id="restartBtn">PLAY AGAIN?</button>
     </div>
     
     <div id="gameClear">
-      <h2>🎉 ゲームクリア！ 🎉</h2>
-      <p>部長を画面上部まで積み上げに成功しました！</p>
+      <h2>🎉 GAME CLEAR 🎉</h2>
+      <p>部長が高みに到達しました</p>
       <p>FINAL SCORE: <span id="clearScore">0</span></p>
       <p id="newHighScoreClear" style="color: #FFD700; font-weight: bold; display: none;">🎉 NEW HIGH SCORE! 🎉</p>
-      <button id="clearRestartBtn">もう一度プレイ</button>
+      <button id="clearRestartBtn">PLAY AGAIN?</button>
     </div>
   </div>
   
@@ -145,6 +145,9 @@
     let objectDropTimes = [];
     let highScore = 0;
     
+    // 出現頻度調整用の抽選プール
+    let imageDrawPool = [];
+    
     const GAME_WIDTH = 375;
     const GAME_HEIGHT = 667;
     
@@ -157,7 +160,11 @@
       { name: 'F', path: './images/F.png', width: 80, height: 50, type: 'rectangle', scale: 0.5 },
       { name: 'G', path: './images/G.png', width: 70, height: 80, type: 'rectangle', scale: 0.5 },
       { name: 'H', path: './images/H.png', width: 80, height: 55, type: 'rectangle', scale: 0.5 },
-      { name: 'I', path: './images/I.png', width: 40, height: 40, type: 'circle', scale: 0.5 }
+  { name: 'I', path: './images/I.png', width: 40, height: 40, type: 'circle', scale: 0.5 },
+  { name: 'J', path: './images/J.png', width: 80, height: 140, type: 'rectangle', scale: 0.5 },
+  { name: 'K', path: './images/K.png', width: 43, height: 90, type: 'rectangle', scale: 0.5 },
+  { name: 'L', path: './images/L.png', width: 28, height: 115, type: 'rectangle', scale: 0.5 },
+  { name: 'M', path: './images/M.png', width: 30, height: 50, type: 'rectangle', scale: 0.5 }
     ];
     
     function initGame() {
@@ -177,8 +184,8 @@
         }
       });
       
-      const platformWidth = 300;
-      const platformY = 450;
+  const platformWidth = 300;
+  const platformY = 550;
       
       platform = Bodies.rectangle(
         GAME_WIDTH / 2,
@@ -203,7 +210,18 @@
       objectDropTimes = [];
       lastDropTime = 0;
       
-      nextImageIndex = Math.floor(Math.random() * imageData.length);
+      // imageDrawPoolを初期化
+      imageDrawPool = [];
+      for (let i = 0; i < imageData.length; i++) {
+        if (imageData[i].name === 'J') {
+          imageDrawPool.push(i); // Jは1回だけ
+        } else {
+          for (let j = 0; j < 5; j++) {
+            imageDrawPool.push(i); // A～Iは5回ずつ
+          }
+        }
+      }
+      nextImageIndex = imageDrawPool[Math.floor(Math.random() * imageDrawPool.length)];
       
       updateUI();
       updatePreview();
@@ -289,9 +307,13 @@
       
       const sizeBonus = Math.floor((imageInfo.width * imageInfo.height) / 100);
       score += 10 + sizeBonus;
-      objectCount++;
+      if (imageInfo.name === 'J') {
+        objectCount += 4;
+      } else {
+        objectCount++;
+      }
       
-      nextImageIndex = Math.floor(Math.random() * imageData.length);
+      nextImageIndex = imageDrawPool[Math.floor(Math.random() * imageDrawPool.length)];
       
       updateUI();
       updatePreview();
