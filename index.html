@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>AG!TOWER GAME</title>
-  <!-- OGP (Open Graph Protocol) -->
   <meta property="og:title" content="AG!タワーゲーム" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://jun-ag.github.io/tower-game/" />
@@ -159,19 +158,79 @@
     const GAME_HEIGHT = 667;
     
     const imageData = [
-      { name: 'A', path: './images/A.png', width: 80, height: 40, type: 'rectangle', scale: 0.5 },
+
+      // A.png の当たり判定を変更
+      { 
+        name: 'A', 
+        path: './images/A.png', 
+        width: 80, 
+        height: 40, 
+        type: 'fromVertices', // ★ タイプを「頂点から作る」に指定
+        scale: 0.5,
+        vertices: [ // ★ ここに9個の頂点座標が設定されています
+          { x: -37, y: -19 }, { x: -15, y: -16 }, { x: -2, y: -4 },
+          { x: 32, y: -18 }, { x: 39, y: -11 }, { x: 12, y: 19 },
+          { x: -29, y: 19 }, { x: -22, y: -7 }, { x: -39, y: -14 },
+   
+        ]
+      },
+
+
       { name: 'B', path: './images/B.png', width: 60, height: 80, type: 'rectangle', scale: 0.5 },
-      { name: 'C', path: './images/C.png', width: 65, height: 80, type: 'rectangle', scale: 0.5 },
+    
+
+// C.png の当たり判定を変更
+      { 
+        name: 'C', 
+        path: './images/C.png', 
+        width: 65, 
+        height: 80, 
+        type: 'fromVertices', // ★ タイプを「頂点から作る」に指定
+        scale: 0.5,
+        vertices: [ // ★ ここに6個の頂点座標が設定されています
+          { x: 0, y: -40 }, { x: 31, y: 11 }, { x: 28, y: 22 },
+          { x: 1, y: 39 }, { x: -30, y: 21 }, { x: -30, y: 12 },
+        ]
+      },
+      
+
+
       { name: 'D', path: './images/D.png', width: 75, height: 80, type: 'rectangle', scale: 0.5 },
       { name: 'E', path: './images/E.png', width: 30, height: 80, type: 'rectangle', scale: 0.5 },
       { name: 'F', path: './images/F.png', width: 80, height: 50, type: 'rectangle', scale: 0.5 },
-      { name: 'G', path: './images/G.png', width: 70, height: 80, type: 'rectangle', scale: 0.5 },
-      { name: 'H', path: './images/H.png', width: 80, height: 55, type: 'rectangle', scale: 0.5 },
-  { name: 'I', path: './images/I.png', width: 40, height: 40, type: 'circle', scale: 0.5 },
-  { name: 'J', path: './images/J.png', width: 80, height: 140, type: 'rectangle', scale: 0.5 },
-  { name: 'K', path: './images/K.png', width: 43, height: 90, type: 'rectangle', scale: 0.5 },
-  { name: 'L', path: './images/L.png', width: 28, height: 115, type: 'rectangle', scale: 0.5 },
-  { name: 'M', path: './images/M.png', width: 30, height: 50, type: 'rectangle', scale: 0.5 }
+      // G.png の当たり判定を変更
+      { 
+        name: 'G', 
+        path: './images/G.png', 
+        width: 70, 
+        height: 80, 
+        type: 'fromVertices', 
+        scale: 0.5,
+        vertices: [
+          { x: -34, y: -17 }, { x: 1, y: -39 }, { x: 12, y: -36 },
+          { x: 3, y: -22 }, { x: 35, y: 40 }, { x: 25, y: 40 },
+          { x: 19, y: 23 }, { x: -13, y: 26 }, { x: -17, y: 40 },
+          { x: -29, y: 40 }, { x: -19, y: 13 }
+        ]
+      },
+      { 
+        name: 'H', 
+        path: './images/H.png', 
+        width: 80, 
+        height: 55, 
+        type: 'fromVertices',
+        scale: 0.5,
+        vertices: [
+          { x: -29, y: -27 }, { x: -20, y: -27 }, { x: -3, y: -22 },
+          { x: 40, y: 20 }, { x: 40, y: 27 }, { x: -39, y: 25 },
+          { x: -36, y: -12 }
+        ]
+      },
+      { name: 'I', path: './images/I.png', width: 40, height: 40, type: 'circle', scale: 0.5 },
+      { name: 'J', path: './images/J.png', width: 80, height: 140, type: 'rectangle', scale: 0.5 },
+      { name: 'K', path: './images/K.png', width: 43, height: 90, type: 'rectangle', scale: 0.5 },
+      { name: 'L', path: './images/L.png', width: 28, height: 115, type: 'rectangle', scale: 0.5 },
+      { name: 'M', path: './images/M.png', width: 30, height: 50, type: 'rectangle', scale: 0.5 }
     ];
     
     function initGame() {
@@ -191,8 +250,8 @@
         }
       });
       
-  const platformWidth = 300;
-  const platformY = 550;
+      const platformWidth = 300;
+      const platformY = 550;
       
       platform = Bodies.rectangle(
         GAME_WIDTH / 2,
@@ -217,14 +276,13 @@
       objectDropTimes = [];
       lastDropTime = 0;
       
-      // imageDrawPoolを初期化
       imageDrawPool = [];
       for (let i = 0; i < imageData.length; i++) {
         if (imageData[i].name === 'J') {
-          imageDrawPool.push(i); // Jは1回だけ
+          imageDrawPool.push(i);
         } else {
           for (let j = 0; j < 5; j++) {
-            imageDrawPool.push(i); // A～Iは5回ずつ
+            imageDrawPool.push(i);
           }
         }
       }
@@ -279,33 +337,30 @@
       
       let body;
       
+      const commonOptions = {
+        restitution: 0.2,
+        friction: 0.9,
+        density: 0.0008,
+        render: {
+          sprite: {
+            texture: imageInfo.path,
+            xScale: imageInfo.scale,
+            yScale: imageInfo.scale
+          }
+        }
+      };
+      
       if (imageInfo.type === 'circle') {
         const radius = Math.max(imageInfo.width, imageInfo.height) / 2;
         body = Bodies.circle(x, 50, radius, {
+          ...commonOptions,
           restitution: 0.4,
           friction: 0.7,
-          density: 0.0008,
-          render: {
-            sprite: {
-              texture: imageInfo.path,
-              xScale: imageInfo.scale,
-              yScale: imageInfo.scale
-            }
-          }
         });
+      } else if (imageInfo.type === 'fromVertices') {
+        body = Bodies.fromVertices(x, 50, [imageInfo.vertices], commonOptions);
       } else {
-        body = Bodies.rectangle(x, 50, imageInfo.width, imageInfo.height, {
-          restitution: 0.3,
-          friction: 0.8,
-          density: 0.0008,
-          render: {
-            sprite: {
-              texture: imageInfo.path,
-              xScale: imageInfo.scale,
-              yScale: imageInfo.scale
-            }
-          }
-        });
+        body = Bodies.rectangle(x, 50, imageInfo.width, imageInfo.height, commonOptions);
       }
       
       World.add(world, body);
