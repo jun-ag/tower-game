@@ -175,8 +175,6 @@
         ]
       },
 
-
-      { name: 'B', path: './images/B.png', width: 60, height: 80, type: 'rectangle', scale: 0.5 },
     
 
 // C.png の当たり判定を変更
@@ -193,11 +191,40 @@
         ]
       },
       
+// D.png の当たり判定を変更
+      { 
+        name: 'G', 
+        path: './images/G.png', 
+        width: 75, 
+        height: 80, 
+        type: 'fromVertices', // ★ タイプを「頂点から作る」に指定
+        scale: 0.5,
+        vertices: [ // ★ ここに11個の頂点座標が設定されています
+          { x: -20, y: -39 }, { x: 20, y: -39 }, { x: 16, y: -11 },
+          { x: 37, y: -2 }, { x: 20, y: 40 }, { x: -16, y: 40 },
+          { x: -37, y: -1 }, { x: -16, y: -11 },
+        ]
+      },
 
+   
 
-      { name: 'D', path: './images/D.png', width: 75, height: 80, type: 'rectangle', scale: 0.5 },
       { name: 'E', path: './images/E.png', width: 30, height: 80, type: 'rectangle', scale: 0.5 },
-      { name: 'F', path: './images/F.png', width: 80, height: 50, type: 'rectangle', scale: 0.5 },
+
+
+// F.png の当たり判定を変更
+      { 
+        name: 'F', 
+        path: './images/F.png', 
+        width: 80, 
+        height: 50, 
+        type: 'fromVertices', // ★ タイプを「頂点から作る」に指定
+        scale: 0.5,
+        vertices: [ // ★ ここに9個の頂点座標が設定されています
+          { x: -12, y: -25 }, { x: 14, y: -13 }, { x: 38, y: 14 },
+          { x: -9, y: 24 }, { x: -39, y: 23 }, { x: -39, y: -9 },
+        ]
+      },
+
       // G.png の当たり判定を変更
       { 
         name: 'G', 
@@ -228,9 +255,45 @@
       },
       { name: 'I', path: './images/I.png', width: 40, height: 40, type: 'circle', scale: 0.5 },
       { name: 'J', path: './images/J.png', width: 80, height: 140, type: 'rectangle', scale: 0.5 },
-      { name: 'K', path: './images/K.png', width: 43, height: 90, type: 'rectangle', scale: 0.5 },
+
+
+   // K.png の当たり判定を変更
+      { 
+        name: 'K', 
+        path: './images/K.png', 
+        width: 43, 
+        height: 90, 
+        type: 'fromVertices', // ★ タイプを「頂点から作る」に指定
+        scale: 0.5,
+        vertices: [ // ★ ここに9個の頂点座標が設定されています
+          { x: -16, y: 44 }, { x: 0, y: -44 }, { x: 21, y: 10 },
+          { x: 21, y: 44 }, { x: -21, y: 44 }, { x: -21, y: 15 },
+        ]
+      },
+      
+
+
       { name: 'L', path: './images/L.png', width: 28, height: 115, type: 'rectangle', scale: 0.5 },
-      { name: 'M', path: './images/M.png', width: 30, height: 50, type: 'rectangle', scale: 0.5 }
+      { name: 'M', path: './images/M.png', width: 30, height: 50, type: 'rectangle', scale: 0.5 },
+
+// N.png スズカの当たり判定を変更
+      { 
+        name: 'N', 
+        path: './images/N.png', 
+        width: 50, 
+        height: 90, 
+        type: 'fromVertices', // ★ タイプを「頂点から作る」に指定
+        scale: 0.5,
+        vertices: [ // ★ ここに11個の頂点座標を設定
+          { x: -7, y: -44 }, { x: 8, y: -44 }, { x: 21, y: -20 },
+          { x: 23, y: 0 }, { x: 11, y: 18 }, { x: 14, y: 45 },
+          { x: -11, y: 45 }, { x: -8, y: 18 }, { x: -17, y: 11},
+          { x: -22, y: 0 }, { x: -21, y: -18 },
+        ]
+      }
+
+
+
     ];
     
     function initGame() {
@@ -250,7 +313,7 @@
         }
       });
       
-      const platformWidth = 300;
+      const platformWidth = 330;
       const platformY = 510;
       
       platform = Bodies.rectangle(
